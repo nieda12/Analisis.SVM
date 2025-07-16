@@ -9,6 +9,9 @@ from wordcloud import WordCloud
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import seaborn as sns
+
 
 # Download stopwords
 nltk.download('stopwords')
@@ -32,16 +35,24 @@ st.markdown("""
 html, body, [data-testid="stAppViewContainer"] {
     background: linear-gradient(135deg, #4b6cb7 0%, #182848  100%);
     min-height: 100vh;
+    color: white !important;
 }
 
 .main {
     background: transparent;
     font-family: 'Poppins', sans-serif;
+    color: white !important;
 }
 
 /* Override Streamlit's default background */
 .stApp {
     background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%);
+    color: white !important;
+}
+
+/* Make ALL text white by default */
+* {
+    color: white !important;
 }
 
 /* Custom Header */
@@ -55,7 +66,7 @@ html, body, [data-testid="stAppViewContainer"] {
 }
 
 .main-header h1 {
-    color: white;
+    color: white !important;
     font-size: 3rem;
     font-weight: 700;
     margin: 0;
@@ -63,7 +74,7 @@ html, body, [data-testid="stAppViewContainer"] {
 }
 
 .main-header p {
-    color: rgba(255,255,255,0.9);
+    color: rgba(255,255,255,0.9) !important;
     font-size: 1.2rem;
     margin-top: 0.5rem;
     font-weight: 400;
@@ -71,7 +82,7 @@ html, body, [data-testid="stAppViewContainer"] {
 
 /* Card Containers */
 .card {
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     padding: 1.2rem;
     margin-bottom: 1.2rem;
@@ -81,15 +92,14 @@ html, body, [data-testid="stAppViewContainer"] {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-
 .card:hover {
     transform: translateY(-5px);
     box-shadow: 0 20px 40px rgba(0,0,0,0.25);
-    background: rgba(255, 255, 255, 0.98);
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .card h2 {
-    color: #2d3436;
+    color: white !important;
     font-weight: 600;
     margin-bottom: 1.5rem;
     padding-bottom: 0.5rem;
@@ -97,9 +107,13 @@ html, body, [data-testid="stAppViewContainer"] {
 }
 
 .card h3 {
-    color: #636e72;
+    color: white !important;
     font-weight: 500;
     margin-bottom: 1rem;
+}
+
+.card p {
+    color: white !important;
 }
 
 /* Metric Cards */
@@ -152,7 +166,6 @@ html, body, [data-testid="stAppViewContainer"] {
     margin-bottom: 1.2rem;
 }
 
-
 .upload-area:hover {
     border-color: rgba(255,255,255,1);
     background: rgba(255, 255, 255, 0.2);
@@ -160,70 +173,148 @@ html, body, [data-testid="stAppViewContainer"] {
 }
 
 .upload-area h3 {
-    color: white;
+    color: white !important;
     margin-bottom: 1rem;
     font-weight: 600;
 }
 
 .upload-area p {
-    color: rgba(255,255,255,0.9);
+    color: rgba(255,255,255,0.9) !important;
     margin: 0;
 }
 
 .upload-icon {
     font-size: 4rem;
-    color: white;
+    color: white !important;
     margin-bottom: 1rem;
 }
 
-/* Buttons */
-.stButton > button {
-    background: linear-gradient(135deg, #5a87d4 0%, #2a3e6c 100%);
-    color: white;
-    border: none;
-    border-radius: 25px;
-    padding: 0.8rem 2rem;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-    font-family: 'Poppins', sans-serif;
+/* UNIVERSAL BUTTON STYLING - SEMUA TOMBOL BIRU DENGAN TULISAN PUTIH */
+button,
+.stButton > button,
+.stDownloadButton > button,
+.stDownloadButton button,
+div[data-testid="stDownloadButton"] > button,
+div[data-testid="stDownloadButton"] button,
+[data-testid="stDownloadButton"] button,
+.stFileUploader button,
+input[type="button"],
+input[type="submit"],
+button[kind="secondary"],
+button[data-testid*="download"],
+a[download] {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 25px !important;
+    padding: 0.8rem 2rem !important;
+    font-size: 1rem !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3) !important;
+    font-family: 'Poppins', sans-serif !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 44px !important;
 }
 
-.stButton > button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+/* Hover state untuk semua tombol */
+button:hover,
+.stButton > button:hover,
+.stDownloadButton > button:hover,
+.stDownloadButton button:hover,
+div[data-testid="stDownloadButton"] > button:hover,
+div[data-testid="stDownloadButton"] button:hover,
+[data-testid="stDownloadButton"] button:hover,
+.stFileUploader button:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+button[kind="secondary"]:hover,
+button[data-testid*="download"]:hover,
+a[download]:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4) !important;
+    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
+    color: white !important;
 }
 
-.stDownloadButton > button {
-    background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%);
-    color: white;
-    border: none;
-    border-radius: 25px;
-    padding: 0.8rem 2rem;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 5px 15px rgba(0, 184, 148, 0.3);
-    font-family: 'Poppins', sans-serif;
+/* Active state untuk semua tombol */
+button:active,
+.stButton > button:active,
+.stDownloadButton > button:active,
+.stDownloadButton button:active,
+div[data-testid="stDownloadButton"] > button:active,
+div[data-testid="stDownloadButton"] button:active,
+[data-testid="stDownloadButton"] button:active,
+.stFileUploader button:active,
+input[type="button"]:active,
+input[type="submit"]:active,
+button[kind="secondary"]:active,
+button[data-testid*="download"]:active,
+a[download]:active {
+    transform: translateY(0px) !important;
+    box-shadow: 0 3px 10px rgba(59, 130, 246, 0.3) !important;
 }
 
-.stDownloadButton > button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 184, 148, 0.4);
+/* Memastikan semua teks dalam tombol berwarna putih */
+button *,
+.stButton > button *,
+.stDownloadButton > button *,
+.stDownloadButton button *,
+div[data-testid="stDownloadButton"] > button *,
+div[data-testid="stDownloadButton"] button *,
+[data-testid="stDownloadButton"] button *,
+.stFileUploader button *,
+input[type="button"] *,
+input[type="submit"] *,
+button[kind="secondary"] *,
+button[data-testid*="download"] *,
+a[download] * {
+    color: white !important;
+}
+
+/* Focus state */
+button:focus,
+.stButton > button:focus,
+.stDownloadButton > button:focus,
+.stDownloadButton button:focus,
+div[data-testid="stDownloadButton"] > button:focus,
+div[data-testid="stDownloadButton"] button:focus,
+[data-testid="stDownloadButton"] button:focus,
+.stFileUploader button:focus,
+input[type="button"]:focus,
+input[type="submit"]:focus,
+button[kind="secondary"]:focus,
+button[data-testid*="download"]:focus,
+a[download]:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+}
+
+/* Khusus untuk file uploader - tetap biru tapi rounded lebih kecil */
+.stFileUploader button {
+    border-radius: 8px !important;
+    padding: 0.5rem 1rem !important;
+    font-size: 0.9rem !important;
+}
+
+.stFileUploader button:hover {
+    transform: translateY(-1px) !important;
 }
 
 /* Text Area */
 .stTextArea > div > div > textarea {
-    border: 2px solid #e0e6ed;
+    border: 2px solid rgba(255,255,255,0.3);
     border-radius: 15px;
     padding: 1rem;
     font-size: 1rem;
     font-family: 'Poppins', sans-serif;
     transition: border-color 0.3s ease;
-    background: white;
+    background: rgba(255, 255, 255, 0.1);
+    color: white !important;
     resize: vertical;
 }
 
@@ -232,14 +323,19 @@ html, body, [data-testid="stAppViewContainer"] {
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+.stTextArea > div > div > textarea::placeholder {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
 /* Selectbox */
 .stSelectbox > div > div > select {
-    border: 2px solid #e0e6ed;
+    border: 2px solid rgba(255,255,255,0.3);
     border-radius: 15px;
     padding: 0.8rem;
     font-size: 1rem;
     font-family: 'Poppins', sans-serif;
-    background: white;
+    background: rgba(255, 255, 255, 0.1);
+    color: white !important;
     transition: border-color 0.3s ease;
 }
 
@@ -248,10 +344,67 @@ html, body, [data-testid="stAppViewContainer"] {
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+.stSelectbox > div > div > select option {
+    background: #2a3e6c !important;
+    color: white !important;
+}
+
+/* File uploader - Fixed styling for black text */
+.stFileUploader {
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px dashed rgba(0, 0, 0, 0.3);
+    border-radius: 15px;
+    padding: 1rem;
+    backdrop-filter: blur(10px);
+}
+
+.stFileUploader:hover {
+    border-color: rgba(0, 0, 0, 0.5);
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.stFileUploader label {
+    color: black !important;
+    font-weight: 500;
+    font-family: 'Poppins', sans-serif;
+}
+
+.stFileUploader [data-testid="stFileUploaderDropzone"] {
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px dashed rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    color: black !important;
+}
+
+.stFileUploader [data-testid="stFileUploaderDropzone"]:hover {
+    border-color: rgba(0, 0, 0, 0.5);
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.stFileUploader [data-testid="stFileUploaderDropzone"] * {
+    color: black !important;
+}
+
+.stFileUploader [data-testid="stFileUploaderDropzoneInstructions"] {
+    color: black !important;
+}
+
+.stFileUploader [data-testid="stFileUploaderDropzoneInstructions"] p {
+    color: black !important;
+}
+
+.stFileUploader [data-testid="stFileUploaderDropzoneInstructions"] span {
+    color: black !important;
+}
+
+.stFileUploader [data-testid="stFileUploaderDropzoneInstructions"] small {
+    color: black !important;
+}
+
 /* Results */
 .result-positive {
     background: linear-gradient(135deg, #00b894 0%, #55efc4 100%);
-    color: white;
+    color: white !important;
     padding: 1.5rem;
     border-radius: 15px;
     text-align: center;
@@ -263,7 +416,7 @@ html, body, [data-testid="stAppViewContainer"] {
 
 .result-negative {
     background: linear-gradient(135deg, #d63031 0%, #ff6b6b 100%);
-    color: white;
+    color: white !important;
     padding: 1.5rem;
     border-radius: 15px;
     text-align: center;
@@ -275,7 +428,7 @@ html, body, [data-testid="stAppViewContainer"] {
 
 .result-neutral {
     background: linear-gradient(135deg, #fdcb6e 0%, #e17055 100%);
-    color: white;
+    color: white !important;
     padding: 1.5rem;
     border-radius: 15px;
     text-align: center;
@@ -288,17 +441,15 @@ html, body, [data-testid="stAppViewContainer"] {
 /* Sidebar */
 [data-testid="stSidebar"] {
     background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%) !important;
-    color: white;
+    color: white !important;
     padding: 1.5rem;
     font-family: 'Poppins', sans-serif;
     box-shadow: 4px 0 12px rgba(0,0,0,0.3);
 }
 
-
 [data-testid="stSidebar"] * {
     color: white !important;
 }
-
 
 /* Sidebar elements */
 .css-1d391kg .stRadio label, .css-1lcbmhc .stRadio label {
@@ -317,23 +468,94 @@ html, body, [data-testid="stAppViewContainer"] {
     color: white !important;
 }
 
+/* Streamlit elements white text */
+.stMarkdown, .stMarkdown p, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4, .stMarkdown h5, .stMarkdown h6 {
+    color: white !important;
+}
+
+.stText, .stCaption {
+    color: white !important;
+}
+
+.stInfo, .stSuccess, .stWarning, .stError {
+    color: white !important;
+}
+
+.stExpander summary {
+    color: white !important;
+}
+
+.stExpander [data-testid="stExpanderDetails"] {
+    color: white !important;
+}
+
+.stDataFrame {
+    color: white !important;
+}
+
+/* Dataframe styling */
+.stDataFrame > div {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    border-radius: 10px;
+}
+
+.stDataFrame table {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: white !important;
+}
+
+.stDataFrame th {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+    border-color: rgba(255,255,255,0.2) !important;
+}
+
+.stDataFrame td {
+    color: white !important;
+    border-color: rgba(255,255,255,0.1) !important;
+}
+
+/* Radio buttons */
+.stRadio > div {
+    color: white !important;
+}
+
+.stRadio label {
+    color: white !important;
+}
+
+/* Checkboxes */
+.stCheckbox > div {
+    color: white !important;
+}
+
+.stCheckbox label {
+    color: white !important;
+}
+
+/* Metrics */
+.stMetric > div {
+    color: white !important;
+}
+
+.stMetric label {
+    color: white !important;
+}
+
+/* Spinner */
+.stSpinner > div {
+    color: white !important;
+}
+
+/* Labels */
+label {
+    color: white !important;
+}
+
 /* Override any white backgrounds in main content */
 [data-testid="stAppViewContainer"] > .main {
     background: transparent !important;
-}
-
-/* File uploader in main area */
-.stFileUploader {
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px dashed rgba(255,255,255,0.5);
-    border-radius: 15px;
-    padding: 1rem;
-    backdrop-filter: blur(10px);
-}
-
-.stFileUploader:hover {
-    border-color: rgba(255,255,255,0.8);
-    background: rgba(255, 255, 255, 0.15);
 }
 
 /* Hide Streamlit branding */
@@ -341,21 +563,7 @@ html, body, [data-testid="stAppViewContainer"] {
 footer {visibility: hidden;}
 .stDeployButton {display:none;}
 
-/* Responsive */
-@media (max-width: 768px) {
-    .main-header h1 {
-        font-size: 2rem;
-    }
-    
-    .card {
-        padding: 1rem;
-    }
-    
-    .metric-card h3 {
-        font-size: 2rem;
-    }
-}
-            /* Fix agar segitiga dropdown (arrow) muncul di selectbox sidebar */
+/* Fix agar segitiga dropdown (arrow) muncul di selectbox sidebar */
 [data-testid="stSidebar"] .stSelectbox > div > div {
     background-color: rgba(255, 255, 255, 0.1);
     color: white !important;
@@ -371,14 +579,27 @@ footer {visibility: hidden;}
     right: 15px;
     top: 50%;
     transform: translateY(-50%);
-    color: white;
+    color: white !important;
     pointer-events: none;
     font-size: 0.8rem;
 }
 
+/* Responsive */
+@media (max-width: 768px) {
+    .main-header h1 {
+        font-size: 2rem;
+    }
+    
+    .card {
+        padding: 1rem;
+    }
+    
+    .metric-card h3 {
+        font-size: 2rem;
+    }
+}
 </style>
 """, unsafe_allow_html=True)
-
 # === HEADER ===
 st.markdown("""
 <div class="main-header">
@@ -470,7 +691,6 @@ if analysis_type == "📄 Analisis File CSV":
     # Upload area
     st.markdown("""
     <div class="upload-area">
-        <h3>Upload File CSV Anda</h3>
         <p>File harus memiliki kolom 'ulasan' yang berisi teks untuk dianalisis</p>
     </div>
     """, unsafe_allow_html=True)
@@ -498,12 +718,10 @@ if analysis_type == "📄 Analisis File CSV":
                 X = vectorizer.transform(df['processed'])
                 df['sentimen'] = model.predict(X)
                 df['sentimen'] = df['sentimen'].astype(str).str.lower().map({
-                'positive': 'Positif',
-                'negative': 'Negatif',
-                'neutral': 'Netral'
+                    'positive': 'Positif',
+                    'negative': 'Negatif',
+                    'neutral': 'Netral'
                 })
-
-                
                 
                 # Success message
                 st.success(f"✅ Berhasil memproses {len(df)} ulasan dari {original_count} data")
@@ -587,25 +805,24 @@ if analysis_type == "📄 Analisis File CSV":
                         color=sentiment_counts.index,
                         
                         color_discrete_map={
-                        'Positif': "#70b6df",   
-                        'Negatif': "#49a4d8",   
-                        'Netral':  "#115aad"    
-                         }
+                            'Positif': "#70b6df",   
+                            'Negatif': "#49a4d8",   
+                            'Netral':  "#115aad"    
+                        }
                     )
                     fig_pie.update_layout(
                         template="plotly_white",
-                         title_font=dict(size=20, color="#333333"),
-                         margin=dict(t=60, b=40, l=20, r=20),
-                         legend_title_text="Sentimen",
-                         legend=dict(
-                             orientation="h",
-                             yanchor="bottom",
-                             y=-0.3,
-                             xanchor="center",
-                             x=0.5,
-                             font=dict(size=12)
-
-                    )
+                        title_font=dict(size=20, color="#333333"),
+                        margin=dict(t=60, b=40, l=20, r=20),
+                        legend_title_text="Sentimen",
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=-0.3,
+                            xanchor="center",
+                            x=0.5,
+                            font=dict(size=12)
+                        )
                     )
                     st.plotly_chart(fig_pie, use_container_width=True)
                 
@@ -649,6 +866,41 @@ if analysis_type == "📄 Analisis File CSV":
                     help="Klik untuk mendownload hasil analisis dalam format CSV"
                 )
                 
+                # === Hasil Evaluasi Model ===
+                st.markdown("### 📊 Hasil Evaluasi Model SVM")
+                
+                try:
+                    with open('y_test.pkl', 'rb') as f:
+                        y_test = pickle.load(f)
+                    with open('y_pred_svm.pkl', 'rb') as f:
+                        y_pred_svm = pickle.load(f)
+
+                    accuracy_svm = accuracy_score(y_test, y_pred_svm)
+                    accuracy_svm_percentage = accuracy_svm * 100
+                    report = classification_report(y_test, y_pred_svm, output_dict=True)
+                    conf_matrix = confusion_matrix(y_test, y_pred_svm)
+
+                    col1, col2 = st.columns(2)
+
+                    with col1:
+                        st.metric(label="🎯 Akurasi SVM", value=f"{accuracy_svm_percentage:.2f}%")
+
+                    with col2:
+                        st.markdown("**Classification Report:**")
+                        st.dataframe(pd.DataFrame(report).transpose())
+
+                    st.markdown("**Confusion Matrix:**")
+                    fig, ax = plt.subplots(figsize=(8, 6))
+                    sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', cbar=True, ax=ax)
+                    ax.set_xlabel('Predicted Labels')
+                    ax.set_ylabel('True Labels')
+                    ax.set_title('Confusion Matrix')
+                    st.pyplot(fig)
+
+                except Exception as e:
+                    st.warning("File evaluasi model tidak ditemukan atau belum tersedia.")
+                    st.info("Pastikan file 'y_test.pkl' dan 'y_pred_svm.pkl' ada di direktori yang sama.")
+
         except Exception as e:
             st.error(f"❌ Error saat memproses file: {str(e)}")
             st.info("Pastikan file CSV memiliki format yang benar dan kolom 'ulasan' ada.")
@@ -708,7 +960,6 @@ elif analysis_type == "✍️ Analisis Manual":
     
     st.markdown('</div>', unsafe_allow_html=True)
 
-
 # === FOOTER ===
 st.markdown("---")
 st.markdown("""
@@ -716,4 +967,4 @@ st.markdown("""
     <p>🚀 Instagram Sentiment Analysis Dashboard | Powered by Machine Learning</p>
     <p>💡 Built with Streamlit, TF-IDF, and SVM</p>
 </div>
-""", unsafe_allow_html=True) 
+""", unsafe_allow_html=True)
